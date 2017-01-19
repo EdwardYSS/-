@@ -4,4 +4,6 @@
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
     <color name="write">#FFFFFF</color>
+    <color name="red">#d81e06</color>
+    <color name="gary_white">#EDEDED</color>
 </resources>

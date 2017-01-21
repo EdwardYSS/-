@@ -1,6 +1,10 @@
 package edward.bysj;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -12,7 +16,7 @@ import android.widget.TextView;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
-import edward.bysj.Adapter.MusicAdapter;
+import edward.bysj.adapter.MusicAdapter;
 import edward.bysj.bean.Music;
 import edward.bysj.constants.Constants;
 import edward.bysj.service.MusicService;
@@ -32,21 +36,39 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      TextView song_name;
     @InjectView(R.id.main_buttom_ll)
     RelativeLayout buttom;
+    private LocalBroadcastManager mManager;
+    private ChangeBroadCastReceiver changeBroadCastReceiver;
+    private MusicAdapter adapter;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.inject(this);
+        registerMyReceiver();
+        adapter = new MusicAdapter(this);
         initView();
     }
 
     private void initView() {
         MusicUtil.getMusic(this);
-        list.setAdapter(new MusicAdapter(this));
+        list.setAdapter(adapter);
         list.setOnItemClickListener(this);
         start_stop.setOnClickListener(this);
         main_next.setOnClickListener(this);
+
+        if (MusicUtil.CUR_MUSIC != -1){
+            buttom.setVisibility(View.VISIBLE);
+            song_name.setText(MusicUtil.list.get(MusicUtil.CUR_MUSIC).getName());
+            start_stop.setImageResource(R.mipmap.start_list);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        new MusicAdapter(this).notifyDataSetChanged();
     }
 
     @Override
@@ -76,10 +98,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
             case R.id.song_next_main:
-                View view = list.findViewWithTag(MusicUtil.CUR_MUSIC);
-                if(view != null){
-                view.setVisibility(View.GONE);
-            }
                 if (MusicUtil.CUR_MUSIC == MusicUtil.list.size()-1){
                     MusicUtil.CUR_MUSIC = 0;
                 }else{
@@ -88,11 +106,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 intent.putExtra("option","start");
                 intent.putExtra("path",MusicUtil.list.get(MusicUtil.CUR_MUSIC).getPath());
                 startService(intent);
+                list.setAdapter(adapter);
+                adapter.notifyDataSetChanged();
                 song_name.setText(MusicUtil.list.get(MusicUtil.CUR_MUSIC).getName());
                 start_stop.setImageResource(R.mipmap.stop_list);
+
                 MusicUtil.CUR_STATUS = Constants.Music.MUSIC_START;
-                View viewWithTag = list.findViewWithTag(MusicUtil.CUR_MUSIC);
-                viewWithTag.setVisibility(View.VISIBLE);
                 break;
 
         }
@@ -131,5 +150,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             MusicUtil.CUR_STATUS = Constants.Music.MUSIC_START;
             startService(intent);
         }
+    }
+
+    class ChangeBroadCastReceiver extends BroadcastReceiver{
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            int i = intent.getIntExtra("change",-2);
+            if (i != -2){
+                Music music = MusicUtil.list.get(i);
+                song_name.setText(music.getName());
+                MusicUtil.CUR_MUSIC = i;
+                list.setAdapter(adapter);
+                adapter.notifyDataSetChanged();
+            }
+        }
+    }
+
+    private void registerMyReceiver() {
+        mManager = LocalBroadcastManager.getInstance(this);
+        IntentFilter filter = new IntentFilter();
+
+        filter.addAction(Constants.BroadCastAction.SERVICE_SEND_CHANGE_ACTION);
+        changeBroadCastReceiver = new ChangeBroadCastReceiver();
+        mManager.registerReceiver(changeBroadCastReceiver, filter);
+    }
+
+    @Override
+    protected void onDestroy() {
+        mManager.unregisterReceiver(changeBroadCastReceiver);
+        super.onDestroy();
     }
 }

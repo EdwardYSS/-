@@ -1,4 +1,4 @@
-package edward.bysj.Adapter;
+package edward.bysj.adapter;
 
 import android.content.Context;
 import android.view.LayoutInflater;

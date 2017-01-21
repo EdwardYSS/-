@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import edward.bysj.broadCast.AutiNextBroadCastReceiver;
 import edward.bysj.constants.Constants;
 
 /**
@@ -106,7 +107,6 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
         Intent intent;
         intent = new Intent(Constants.BroadCastAction.SERVICE_SEND_ACTION);
         intent.putExtra("progressb",-2);
-
         manager.sendBroadcast(intent);
     }
 

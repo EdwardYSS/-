@@ -14,7 +14,8 @@ public class Constants {
     }
 
     public static final class BroadCastAction{
-        public static final String SERVICE_SEND_ACTION = "com.wuxianedu.music.service";
+        public static final String SERVICE_SEND_ACTION = "edward.music.seek.service";
+        public static final String SERVICE_SEND_CHANGE_ACTION = "edward.music.seek.service";
     }
 
     public static final class Code{

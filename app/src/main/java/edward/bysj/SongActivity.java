@@ -45,7 +45,6 @@ public class SongActivity extends AppCompatActivity implements View.OnClickListe
     private int position;
     private LocalBroadcastManager mManager;
     private MyBroadCastReceiver myBroadCastReceiver;
-    private Intent intentb;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,7 +53,6 @@ public class SongActivity extends AppCompatActivity implements View.OnClickListe
         ButterKnife.inject(this);
         registerMyReceiver();
         mManager = LocalBroadcastManager.getInstance(this);
-        intentb = new Intent(Constants.BroadCastAction.SERVICE_SEND_ACTION);
         initView();
     }
 
@@ -93,6 +91,7 @@ public class SongActivity extends AppCompatActivity implements View.OnClickListe
                 intent.putExtra("option","start");
                 intent.putExtra("path",music.getPath());
                 refreUI(music);
+                sendBroad();
                 startService(intent);
                 break;
             case R.id.song_next:
@@ -123,7 +122,7 @@ public class SongActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private void refreUI(final Music music){
+    public void refreUI(final Music music){
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -138,17 +137,19 @@ public class SongActivity extends AppCompatActivity implements View.OnClickListe
      * @param intent
      */
         private void circleNext(Intent intent){
-        if (position == MusicUtil.list.size()-1){
+            if (position == MusicUtil.list.size()-1){
             position = 0;
-        }else{
+            }else{
             position++;
+            }
+            Music music1 = MusicUtil.list.get(position);
+            intent.putExtra("option","start");
+            intent.putExtra("path",music1.getPath());
+            refreUI(music1);
+            sendBroad();
+            startService(intent);
+
         }
-        Music music1 = MusicUtil.list.get(position);
-        intent.putExtra("option","start");
-        intent.putExtra("path",music1.getPath());
-        refreUI(music1);
-        startService(intent);
-    }
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -174,7 +175,7 @@ public class SongActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     //更新seekBar随着歌曲的播放
-    private void refureProgress(int max,int progress){
+    public void refureProgress(int max,int progress){
 
         String min;
         String sed;
@@ -192,7 +193,7 @@ public class SongActivity extends AppCompatActivity implements View.OnClickListe
         running_time.setText(p);
     }
 
-    private void cricleAutoNext(){
+    public void cricleAutoNext( ){
 
         Intent intent;
         if (position == MusicUtil.list.size()-1){
@@ -200,13 +201,20 @@ public class SongActivity extends AppCompatActivity implements View.OnClickListe
         }else {
             position++;
         }
+        MusicUtil.CUR_MUSIC = position;
         intent = new Intent(this,MusicService.class);
         intent.putExtra("option","start");
         intent.putExtra("path",MusicUtil.list.get(position).getPath());
         refreUI(MusicUtil.list.get(position));
-
+        sendBroad();
         startService(intent);
+    }
 
+    private void sendBroad(){
+        Intent intentb ;
+        intentb = new Intent(Constants.BroadCastAction.SERVICE_SEND_CHANGE_ACTION);
+        intentb.putExtra("change",position);
+        mManager.sendBroadcast(intentb);
     }
 
     class MyBroadCastReceiver extends BroadcastReceiver{

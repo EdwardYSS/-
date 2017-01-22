@@ -37,7 +37,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @InjectView(R.id.main_buttom_ll)
     RelativeLayout buttom;
     private LocalBroadcastManager mManager;
-    private ChangeBroadCastReceiver changeBroadCastReceiver;
+    private ChangeBroadCastReceiver1 changeBroadCastReceiver1;
     private MusicAdapter adapter;
 
 
@@ -46,7 +46,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.inject(this);
-        registerMyReceiver();
+        registerMyReceiver1();
         adapter = new MusicAdapter(this);
         initView();
     }
@@ -68,7 +68,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onResume() {
         super.onResume();
-        new MusicAdapter(this).notifyDataSetChanged();
+        //if (MusicUtil.CUR_MUSIC != -1) {
+           // refureUI();
+       // }
     }
 
     @Override
@@ -106,7 +108,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 intent.putExtra("option","start");
                 intent.putExtra("path",MusicUtil.list.get(MusicUtil.CUR_MUSIC).getPath());
                 startService(intent);
-                list.setAdapter(adapter);
+                //list.setAdapter(adapter);
                 adapter.notifyDataSetChanged();
                 song_name.setText(MusicUtil.list.get(MusicUtil.CUR_MUSIC).getName());
                 start_stop.setImageResource(R.mipmap.stop_list);
@@ -152,33 +154,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    class ChangeBroadCastReceiver extends BroadcastReceiver{
-
+    class ChangeBroadCastReceiver1 extends BroadcastReceiver{
         @Override
         public void onReceive(Context context, Intent intent) {
-            int i = intent.getIntExtra("change",-2);
-            if (i != -2){
-                Music music = MusicUtil.list.get(i);
-                song_name.setText(music.getName());
-                MusicUtil.CUR_MUSIC = i;
-                list.setAdapter(adapter);
-                adapter.notifyDataSetChanged();
+            int i = intent.getIntExtra("progressb",-1);
+               if (i == -2){
+                   refureUI();
+               }
             }
-        }
-    }
 
-    private void registerMyReceiver() {
+    }
+    private void registerMyReceiver1() {
         mManager = LocalBroadcastManager.getInstance(this);
         IntentFilter filter = new IntentFilter();
 
-        filter.addAction(Constants.BroadCastAction.SERVICE_SEND_CHANGE_ACTION);
-        changeBroadCastReceiver = new ChangeBroadCastReceiver();
-        mManager.registerReceiver(changeBroadCastReceiver, filter);
+        filter.addAction(Constants.BroadCastAction.SERVICE_SEND_ACTION);
+        changeBroadCastReceiver1 = new ChangeBroadCastReceiver1();
+        mManager.registerReceiver(changeBroadCastReceiver1, filter);
     }
 
     @Override
     protected void onDestroy() {
-        mManager.unregisterReceiver(changeBroadCastReceiver);
+        mManager.unregisterReceiver(changeBroadCastReceiver1);
         super.onDestroy();
+    }
+
+    private void refureUI(){
+        song_name.setText(MusicUtil.list.get(MusicUtil.CUR_MUSIC).getName());
+        list.setAdapter(adapter);
+        adapter.notifyDataSetChanged();
     }
 }

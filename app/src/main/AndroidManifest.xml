@@ -21,6 +21,13 @@
         <activity android:name=".SongActivity"></activity>
 
         <service android:name=".service.MusicService"></service>
+
+        <receiver android:name=".broadCast.AutoNextBroadCastReceiver">
+
+            <intent-filter>
+                <action android:name="edward.music.all.changemusic.service"/>
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

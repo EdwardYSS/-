@@ -195,26 +195,18 @@ public class SongActivity extends AppCompatActivity implements View.OnClickListe
 
     public void cricleAutoNext( ){
 
-        Intent intent;
         if (position == MusicUtil.list.size()-1){
             position = 0;
         }else {
             position++;
         }
         MusicUtil.CUR_MUSIC = position;
-        intent = new Intent(this,MusicService.class);
-        intent.putExtra("option","start");
-        intent.putExtra("path",MusicUtil.list.get(position).getPath());
         refreUI(MusicUtil.list.get(position));
         sendBroad();
-        startService(intent);
     }
 
     private void sendBroad(){
-        Intent intentb ;
-        intentb = new Intent(Constants.BroadCastAction.SERVICE_SEND_CHANGE_ACTION);
-        intentb.putExtra("change",position);
-        mManager.sendBroadcast(intentb);
+       MusicUtil.CUR_MUSIC = position;
     }
 
     class MyBroadCastReceiver extends BroadcastReceiver{

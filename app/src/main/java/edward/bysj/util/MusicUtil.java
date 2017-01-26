@@ -19,6 +19,7 @@ public class MusicUtil {
 
     public static int CUR_MUSIC = -1;
     public static int CUR_STATUS = Constants.Music.MUSIC_STOP;
+    public static int CUR_PLAYWAY = Constants.Play.LIST;
     public static List<Music> list = new ArrayList<>();
 
     public static void getMusic(Context context){
@@ -40,8 +41,9 @@ public class MusicUtil {
             music.setTime(min+":"+sec);
             String path = cursor.getString(cursor.getColumnIndex(projection[2]));
             music.setPath(path);
-            list.add(music);
-
+            if (time/1000>10) {
+                list.add(music);
+            }
         }
         cursor.close();
     }

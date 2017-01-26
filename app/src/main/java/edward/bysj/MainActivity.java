@@ -7,6 +7,7 @@ import android.content.IntentFilter;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ImageView;
@@ -21,6 +22,7 @@ import edward.bysj.bean.Music;
 import edward.bysj.constants.Constants;
 import edward.bysj.service.MusicService;
 import edward.bysj.util.MusicUtil;
+import edward.bysj.util.PlayWaysUtils;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener,AdapterView.OnItemClickListener{
 
@@ -61,16 +63,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (MusicUtil.CUR_MUSIC != -1){
             buttom.setVisibility(View.VISIBLE);
             song_name.setText(MusicUtil.list.get(MusicUtil.CUR_MUSIC).getName());
-            start_stop.setImageResource(R.mipmap.start_list);
+            if (MusicUtil.CUR_STATUS == Constants.Music.MUSIC_START) {
+                start_stop.setImageResource(R.mipmap.stop_list);
+            }else{
+                start_stop.setImageResource(R.mipmap.start_list);
+            }
         }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        //if (MusicUtil.CUR_MUSIC != -1) {
-           // refureUI();
-       // }
+        if (MusicUtil.CUR_MUSIC != -1) {
+            refureUI();
+        }
     }
 
     @Override
@@ -100,22 +106,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
             case R.id.song_next_main:
-                if (MusicUtil.CUR_MUSIC == MusicUtil.list.size()-1){
-                    MusicUtil.CUR_MUSIC = 0;
-                }else{
-                    MusicUtil.CUR_MUSIC++;
-                }
-                intent.putExtra("option","start");
-                intent.putExtra("path",MusicUtil.list.get(MusicUtil.CUR_MUSIC).getPath());
-                startService(intent);
-                //list.setAdapter(adapter);
-                adapter.notifyDataSetChanged();
-                song_name.setText(MusicUtil.list.get(MusicUtil.CUR_MUSIC).getName());
-                start_stop.setImageResource(R.mipmap.stop_list);
-
-                MusicUtil.CUR_STATUS = Constants.Music.MUSIC_START;
+                PlayWaysUtils.nextMusic(this);
+                refureUI();//下一首更新ui
+               // Log.e("main1",""+MusicUtil.CUR_MUSIC);
                 break;
-
         }
 
     }
@@ -154,6 +148,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    //自动播放下一首时接收广播更新ui
     class ChangeBroadCastReceiver1 extends BroadcastReceiver{
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -180,8 +175,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void refureUI(){
-        song_name.setText(MusicUtil.list.get(MusicUtil.CUR_MUSIC).getName());
-        list.setAdapter(adapter);
-        adapter.notifyDataSetChanged();
+        //只有在主线程中才能更新ui
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                song_name.setText(MusicUtil.list.get(MusicUtil.CUR_MUSIC).getName());
+                //list.setAdapter(adapter);
+                adapter.notifyDataSetChanged();
+            }
+        });
     }
 }

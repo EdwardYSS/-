@@ -13,6 +13,13 @@ public class Constants {
 
     }
 
+    public static final class Play{
+
+        public static final int SINGLE = 3001;
+        public static final int LIST = 3002;
+        public static final int RANDOM = 3004;
+    }
+
     public static final class BroadCastAction{
         public static final String SERVICE_SEND_ALL_ACTION = "edward.music.all.changemusic.service";
         public static final String SERVICE_SEND_ACTION = "edward.music.seek.service";

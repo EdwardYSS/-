@@ -20,6 +20,7 @@
             android:text="中医学方剂歌诀"
             android:textSize="20sp"
             android:padding="10dp"
+            android:textColor="@color/write"
             />
     </RelativeLayout>
 

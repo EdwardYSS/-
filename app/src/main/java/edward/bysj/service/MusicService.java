@@ -6,6 +6,7 @@ import android.media.MediaPlayer;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 
 import java.io.IOException;
 import java.util.Timer;
@@ -17,7 +18,8 @@ import edward.bysj.constants.Constants;
  * Created by Administrator on 2017/1/19 0019.
  */
 
-public class MusicService extends Service implements MediaPlayer.OnErrorListener ,MediaPlayer.OnPreparedListener,MediaPlayer.OnCompletionListener{
+public class MusicService extends Service implements MediaPlayer.OnErrorListener ,
+        MediaPlayer.OnPreparedListener,MediaPlayer.OnCompletionListener{
 
     private MediaPlayer mediaPlayer;
     private LocalBroadcastManager manager;
@@ -65,6 +67,7 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
             mediaPlayer.setDataSource(path);
             mediaPlayer.prepare();
             mediaPlayer.start();
+            Log.e("main1","start");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -103,14 +106,31 @@ public class MusicService extends Service implements MediaPlayer.OnErrorListener
     @Override
     public void onCompletion(MediaPlayer mp) {
 
-        Intent intent;
-        intent = new Intent(Constants.BroadCastAction.SERVICE_SEND_ALL_ACTION);
-        intent.putExtra("progressAll",-2);
-        sendBroadcast(intent);
+        int max = mediaPlayer.getDuration();
+        int progress = mediaPlayer.getCurrentPosition();
+        String min = max / 60000 < 10 ? 0 + "" + max / 60000 : max / 60000 + "";
+        String sed = (max / 1000 % 60 < 10) ? (0 + "" + max / 1000 % 60) : (max / 1000 % 60 + "");
+        String t = min + ":" + sed;
 
-        intent = new Intent(Constants.BroadCastAction.SERVICE_SEND_ACTION);
-        intent.putExtra("progressb",-2);
-        manager.sendBroadcast(intent);
+        min = progress / 60000 < 10 ? 0 + "" + progress / 60000 : progress / 60000 + "";
+        sed = (progress / 1000 % 60 < 10) ? (0 + "" + progress / 1000 % 60) : (progress / 1000 % 60 + "");
+        String p = min + ":" + sed;
+
+        //Log.e("main1",t);
+        //Log.e("main1",p);
+        if (t.equals(p)) {
+            Intent intent;
+            //切歌的广播
+            intent = new Intent(Constants.BroadCastAction.SERVICE_SEND_ALL_ACTION);
+            intent.putExtra("progressAll", -2);
+            Log.e("main1", "播放完毕");
+            sendBroadcast(intent);
+
+            //更新界面ui的广播
+            intent = new Intent(Constants.BroadCastAction.SERVICE_SEND_ACTION);
+            intent.putExtra("progressb", -2);
+            manager.sendBroadcast(intent);
+        }
     }
 
     //将歌曲播放数据回调

@@ -4,14 +4,17 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Build;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -19,6 +22,7 @@ import edward.bysj.bean.Music;
 import edward.bysj.constants.Constants;
 import edward.bysj.service.MusicService;
 import edward.bysj.util.MusicUtil;
+import edward.bysj.util.PlayWaysUtils;
 
 public class SongActivity extends AppCompatActivity implements View.OnClickListener,SeekBar.OnSeekBarChangeListener {
 
@@ -42,7 +46,6 @@ public class SongActivity extends AppCompatActivity implements View.OnClickListe
     ImageView song_text_list;
     @InjectView(R.id.play_change)
     ImageView play_change;
-    private int position;
     private LocalBroadcastManager mManager;
     private MyBroadCastReceiver myBroadCastReceiver;
 
@@ -57,8 +60,17 @@ public class SongActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void initView() {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            //状态栏透明
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+            //导航栏透明
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
+        }
+
+
         Intent intent1 = getIntent();
-        position = intent1.getIntExtra("current_music",-1);
+        int position = intent1.getIntExtra("current_music",-1);
         Music music = MusicUtil.list.get(position);
         song_title.setText(music.getName());
         back.setOnClickListener(this);
@@ -78,30 +90,38 @@ public class SongActivity extends AppCompatActivity implements View.OnClickListe
                 finish();
                 break;
             case R.id.song_text_list:
+                finish();
                 break;
             case R.id.play_change:
+                if (MusicUtil.CUR_PLAYWAY == Constants.Play.LIST){
+                    play_change.setImageResource(R.mipmap.single);
+                    MusicUtil.CUR_PLAYWAY = Constants.Play.SINGLE;
+                    Toast.makeText(this,"单曲循环",Toast.LENGTH_SHORT).show();
+                }else if (MusicUtil.CUR_PLAYWAY == Constants.Play.SINGLE){
+                    play_change.setImageResource(R.mipmap.sjbf);
+                    MusicUtil.CUR_PLAYWAY = Constants.Play.RANDOM;
+                    Toast.makeText(this,"随机播放",Toast.LENGTH_SHORT).show();
+                }else if (MusicUtil.CUR_PLAYWAY == Constants.Play.RANDOM){
+                    play_change.setImageResource(R.mipmap.sxbf);
+                    MusicUtil.CUR_PLAYWAY = Constants.Play.LIST;
+                    Toast.makeText(this,"列表循环",Toast.LENGTH_SHORT).show();
+                }
                 break;
             case R.id.song_last:
-                if (position == 0){
-                    position = MusicUtil.list.size()-1;
-                }else{
-                    position--;
-                }
-                Music music = MusicUtil.list.get(position);
-                intent.putExtra("option","start");
-                intent.putExtra("path",music.getPath());
+                PlayWaysUtils.lastMusic(this);
+                Music music = MusicUtil.list.get(MusicUtil.CUR_MUSIC);
                 refreUI(music);
-                sendBroad();
-                startService(intent);
                 break;
             case R.id.song_next:
-                circleNext(intent);
+                PlayWaysUtils.nextMusic(this);
+                Music music1 = MusicUtil.list.get(MusicUtil.CUR_MUSIC);
+                refreUI(music1);
                 break;
             case R.id.song_start_stop:
 
                 if (MusicUtil.CUR_STATUS == Constants.Music.MUSIC_STOP){
                     intent.putExtra("option","start");
-                    intent.putExtra("path",MusicUtil.list.get(position).getPath());
+                    intent.putExtra("path",MusicUtil.list.get(MusicUtil.CUR_MUSIC).getPath());
                     startService(intent);
                     song_start_stop.setImageResource(R.mipmap.stop_text);
                     MusicUtil.CUR_STATUS = Constants.Music.MUSIC_START;
@@ -132,24 +152,11 @@ public class SongActivity extends AppCompatActivity implements View.OnClickListe
         });
     }
 
-    /***
-     * 列表循环模式下的下一首
-     * @param intent
-     */
-        private void circleNext(Intent intent){
-            if (position == MusicUtil.list.size()-1){
-            position = 0;
-            }else{
-            position++;
-            }
-            Music music1 = MusicUtil.list.get(position);
-            intent.putExtra("option","start");
-            intent.putExtra("path",music1.getPath());
-            refreUI(music1);
-            sendBroad();
-            startService(intent);
-
-        }
+    @Override
+    protected void onResume() {
+        super.onResume();
+        currentMusicWay();
+    }
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -193,21 +200,7 @@ public class SongActivity extends AppCompatActivity implements View.OnClickListe
         running_time.setText(p);
     }
 
-    public void cricleAutoNext( ){
 
-        if (position == MusicUtil.list.size()-1){
-            position = 0;
-        }else {
-            position++;
-        }
-        MusicUtil.CUR_MUSIC = position;
-        refreUI(MusicUtil.list.get(position));
-        sendBroad();
-    }
-
-    private void sendBroad(){
-       MusicUtil.CUR_MUSIC = position;
-    }
 
     class MyBroadCastReceiver extends BroadcastReceiver{
         @Override
@@ -215,7 +208,8 @@ public class SongActivity extends AppCompatActivity implements View.OnClickListe
             int progress = intent.getIntExtra("progressb", -1);
             int total = intent.getIntExtra("total", -1);
             if (progress == -2){
-                cricleAutoNext();
+                //PlayWaysUtils.nextMusic(context);
+                refreUI(MusicUtil.list.get(MusicUtil.CUR_MUSIC));
             }else {
                 refureProgress(total, progress);
             }
@@ -238,5 +232,16 @@ public class SongActivity extends AppCompatActivity implements View.OnClickListe
     protected void onDestroy() {
         mManager.unregisterReceiver(myBroadCastReceiver);
         super.onDestroy();
+    }
+
+    private void currentMusicWay(){
+
+        if (MusicUtil.CUR_PLAYWAY == Constants.Play.RANDOM){
+            play_change.setImageResource(R.mipmap.sjbf);
+        }else if (MusicUtil.CUR_PLAYWAY == Constants.Play.LIST){
+            play_change.setImageResource(R.mipmap.sxbf);
+        }else if (MusicUtil.CUR_PLAYWAY == Constants.Play.SINGLE){
+            play_change.setImageResource(R.mipmap.single);
+        }
     }
 }

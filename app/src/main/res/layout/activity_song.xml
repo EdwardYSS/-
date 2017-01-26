@@ -4,7 +4,10 @@
     android:id="@+id/activity_song"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="edward.bysj.SongActivity">
+    tools:context="edward.bysj.SongActivity"
+    android:fitsSystemWindows="true"
+    android:background="@mipmap/bg_create_live"
+    >
 
     <RelativeLayout
         android:id="@+id/song_top_ll"
@@ -27,6 +30,7 @@
             android:text="解表剂"
             android:textSize="20sp"
             android:padding="10dp"
+            android:textColor="@color/write"
             />
     </RelativeLayout>
 
